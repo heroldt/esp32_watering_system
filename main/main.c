@@ -6,6 +6,13 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 #include "moisture.h"
+#include "mqtt.h"
+#include "string.h"
+
+#define ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
+#define ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+
+const char mqtt_topic[] = "esp32_watering_system/moisture";
 
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -23,8 +30,8 @@ void app_main(void)
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     wifi_config_t sta_config = {
         .sta = {
-            .ssid = CONFIG_ESP_WIFI_SSID,
-            .password = CONFIG_ESP_WIFI_PASSWORD,
+            .ssid = ESP_WIFI_SSID,
+            .password = ESP_WIFI_PASS,
             .bssid_set = false
         }
     };
@@ -32,12 +39,15 @@ void app_main(void)
     ESP_ERROR_CHECK( esp_wifi_start() );
     ESP_ERROR_CHECK( esp_wifi_connect() );
 
-    gpio_set_direction(GPIO_NUM_4, GPIO_MODE_OUTPUT);
-    int level = 0;
+    mqtt_init();
+
     while (true) {
-        gpio_set_level(GPIO_NUM_4, level);
-        level = !level;
-        vTaskDelay(300 / portTICK_PERIOD_MS);
+    	static uint16_t moisture1 = 0;
+    	char mqtt_data[20] = "";
+    	moisture_get_raw_value(ADC1_CHANNEL_6,&moisture1);
+    	sprintf(mqtt_data,"%u",moisture1);
+    	mqtt_publish(&mqtt_topic[0], &mqtt_data[0], strlen(mqtt_data));
+    	vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 
