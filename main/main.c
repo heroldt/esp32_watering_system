@@ -6,11 +6,12 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 #include "moisture.h"
+#include "dht22.h"
 #include "mqtt.h"
 #include "string.h"
 
-#define ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-#define ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+#define ESP_WIFI_SSID   CONFIG_ESP_WIFI_SSID
+#define ESP_WIFI_PASS   CONFIG_ESP_WIFI_PASSWORD
 
 const char mqtt_topic[] = "esp32_watering_system/moisture";
 
@@ -41,13 +42,20 @@ void app_main(void)
 
     mqtt_init();
 
+    setDHTgpio( 4 );
+    printf( "Starting DHT Task\n\n");
+    readDHT();
+
+    float dht22_hum = getHumidity();
+    float dht22_temp = getTemperature();
+
     while (true) {
     	static uint16_t moisture1 = 0;
-    	char mqtt_data[20] = "";
+    	char mqtt_data[128] = "";
     	moisture_get_raw_value(ADC1_CHANNEL_6,&moisture1);
-    	sprintf(mqtt_data,"%u",moisture1);
+    	sprintf(mqtt_data,"%u,%.1f,%.1f",moisture1,dht22_temp,dht22_hum);
     	mqtt_publish(&mqtt_topic[0], &mqtt_data[0], strlen(mqtt_data));
-    	vTaskDelay(1000 / portTICK_PERIOD_MS);
+    	vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
 

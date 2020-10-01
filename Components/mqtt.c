@@ -2,13 +2,15 @@
 #include "mqtt_client.h"
 #include "esp_log.h"
 
+#define MQTT_HOSTNAME	CONFIG_MQTT_HOSTNAME
+
 static const char *TAG = "MQTT";
 static esp_mqtt_client_handle_t client;
 
 void mqtt_init(void)
 {
 	const esp_mqtt_client_config_t mqtt_cfg = {
-	    .uri = "mqtt://mqtt.eclipse.org",
+	    .uri = MQTT_HOSTNAME,
 	    // .user_context = (void *)your_context
 	};
 	client = esp_mqtt_client_init(&mqtt_cfg);
