@@ -44,15 +44,15 @@ void app_main(void)
 
     setDHTgpio( 4 );
     printf( "Starting DHT Task\n\n");
-    readDHT();
 
-    float dht22_hum = getHumidity();
-    float dht22_temp = getTemperature();
 
     while (true) {
     	static uint16_t moisture1 = 0;
     	char mqtt_data[128] = "";
     	moisture_get_raw_value(ADC1_CHANNEL_6,&moisture1);
+    	readDHT();
+    	float dht22_hum = getHumidity();
+    	float dht22_temp = getTemperature();
     	sprintf(mqtt_data,"%u,%.1f,%.1f",moisture1,dht22_temp,dht22_hum);
     	mqtt_publish(&mqtt_topic[0], &mqtt_data[0], strlen(mqtt_data));
     	vTaskDelay(5000 / portTICK_PERIOD_MS);
